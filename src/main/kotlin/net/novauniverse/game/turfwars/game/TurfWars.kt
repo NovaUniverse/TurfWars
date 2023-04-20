@@ -26,6 +26,7 @@ import org.bukkit.Bukkit
 import org.bukkit.GameMode
 import org.bukkit.Location
 import org.bukkit.Material
+import org.bukkit.block.Block
 import org.bukkit.entity.Arrow
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.LivingEntity
@@ -35,20 +36,18 @@ import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.block.BlockPlaceEvent
-import org.bukkit.event.entity.EntityDamageByEntityEvent
-import org.bukkit.event.entity.EntityDamageEvent
-import org.bukkit.event.entity.EntityShootBowEvent
-import org.bukkit.event.entity.PlayerDeathEvent
+import org.bukkit.event.entity.*
 import org.bukkit.event.inventory.InventoryInteractEvent
 import org.bukkit.event.player.PlayerDropItemEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerPickupItemEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.scheduler.BukkitRunnable
+import org.bukkit.util.BlockIterator
 import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.math.abs
 import kotlin.math.floor
+
 
 class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
     private var started = false
@@ -166,14 +165,18 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
         return false
     }
 
-    override fun canAttack(player1: LivingEntity?, player2: LivingEntity?): Boolean {
-        val team1 = getTeam(player1!!.uniqueId)
-        val team2 = getTeam(player2!!.uniqueId)
+    override fun canAttack(attacker: LivingEntity?, target: LivingEntity?): Boolean {
+        if (attacker is Player && target is Player) {
 
-        if (team1 != null && team2 != null) {
-            return team1.team != team2.team && !buildPeriodActive
+            val team1 = getTeam(attacker.uniqueId)
+            val team2 = getTeam(target.uniqueId)
+
+            if (team1 != null && team2 != null) {
+                return team1.team != team2.team
+            }
+            return false
         }
-        return true
+        return true;
     }
 
     fun tpPlayer(player: Player) {
@@ -217,6 +220,8 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
 
         VersionIndependentUtils.get().broadcastTitle("${ChatColor.GREEN}Build", "${ChatColor.AQUA}Build period ends in ${config!!.buildTime} seconds", 0, 60, 20)
 
+        Gamerule.DO_TILE_DROPS.set(world, true)
+
         Bukkit.getOnlinePlayers().stream().filter(this::isPlayerInGame).forEach {
             PlayerUtils.fullyHealPlayer(it)
             val team = getTeam(it)
@@ -231,6 +236,8 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
         buildPeriodActive = false
 
         VersionIndependentUtils.get().broadcastTitle("${ChatColor.RED}Fight", "${ChatColor.AQUA}Build period starts in ${config!!.combatTime} seconds", 0, 60, 20)
+
+        Gamerule.DO_TILE_DROPS.set(world, false)
 
         Bukkit.getOnlinePlayers().filter(this::isPlayerInGame).forEach {
             it.inventory.setItem(2, ItemStack(Material.AIR))
@@ -247,17 +254,24 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
 
         val capturedLocation = if (team.team == TurfWarsTeam.TEAM_1) team1FrontLine + 1 else team1FrontLine
 
-        Log.debug("TurfWars", "Captured location: $capturedLocation")
+        val config: TurfWarsConfig = this.config!!;
 
         val diff: Int = team1!!.kills - team2!!.kills
         team1FrontLine = initialMiddleLocation + diff
-        val floor = config!!.floorMaterial
+        val floor = config.floorMaterial
 
-        val y = config!!.playArea.position1.y;
-        for (z in config!!.playArea.position1.blockZ..config!!.playArea.position2.blockZ) {
-            val location = Location(world, capturedLocation.toDouble(), y, z.toDouble())
+        val floorY = config.playArea.position1.blockY;
+        for (z in config.playArea.position1.blockZ..config.playArea.position2.blockZ) {
+            val location = Location(world, capturedLocation.toDouble(), floorY.toDouble(), z.toDouble())
             if (floorMaterials.contains(location.block.type)) {
                 VersionIndependentUtils.get().setColoredBlock(location.block, team.teamConfig.dyeColor, floor)
+            }
+
+            for (y in config.playArea.position1.blockY + 1..config.playArea.position2.blockY) {
+                val checkLocation = Location(world, capturedLocation.toDouble(), y.toDouble(), location.z)
+                if (buildMaterials.contains(checkLocation.block.type)) {
+                    breakBlockWithEffect(checkLocation.block)
+                }
             }
         }
 
@@ -368,14 +382,6 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
 
         started = true
         sendBeginEvent()
-
-        object : BukkitRunnable() {
-            override fun run() {
-                val diff: Int = team1!!.kills - team2!!.kills
-                val team1end = initialMiddleLocation + diff
-                Log.trace("Turf size: $turfSize Goal: $goal Team1 kills: ${team1!!.kills} Team2 kills: ${team2!!.kills} Diff: $diff Team 1 end: $team1end initialMiddleLocation: $initialMiddleLocation team1FrontLine: $team1FrontLine")
-            }
-        }.runTaskTimer(plugin, 20L, 20L)
     }
 
     // To support both 1.8 and 1.16+ we need this
@@ -390,18 +396,18 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
 
         location.add(1.0, 0.0, 0.0)
         VersionIndependentUtils.get().setColoredBlock(location.block, team1!!.teamConfig.dyeColor, config!!.buildingBlocks)
-        floorMaterials.add(location.block.type)
+        buildMaterials.add(location.block.type)
 
         location.add(1.0, 0.0, 0.0)
-        VersionIndependentUtils.get().setColoredBlock(location.block, team2!!.teamConfig.dyeColor, config!!.buildingBlocks)
+        VersionIndependentUtils.get().setColoredBlock(location.block, team2!!.teamConfig.dyeColor, config!!.floorMaterial)
         if (!floorMaterials.contains(location.block.type)) {
             floorMaterials.add(location.block.type)
         }
 
         location.add(1.0, 0.0, 0.0)
         VersionIndependentUtils.get().setColoredBlock(location.block, team2!!.teamConfig.dyeColor, config!!.buildingBlocks)
-        if (!floorMaterials.contains(location.block.type)) {
-            floorMaterials.add(location.block.type)
+        if (!buildMaterials.contains(location.block.type)) {
+            buildMaterials.add(location.block.type)
         }
 
         Log.debug("TurfWarsMaterialCache", "Floor materials: ${floorMaterials.size} Build materials: ${buildMaterials.size}")
@@ -493,19 +499,6 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
-    fun onInventoryInteract(e: InventoryInteractEvent) {
-        if (!started) {
-            return
-        }
-
-        if (e.whoClicked.gameMode == GameMode.CREATIVE) {
-            return
-        }
-
-        e.isCancelled = true
-    }
-
-    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     fun onBlockPlace(e: BlockPlaceEvent) {
         if (!started) {
             return
@@ -583,6 +576,47 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
         }
 
         if (!buildPeriodActive) {
+            return
+        }
+
+        e.isCancelled = true
+    }
+
+    fun breakBlockWithEffect(block: Block) {
+        VersionIndependentUtils.get().showBlockBreakParticles(block, 10)
+        block.breakNaturally()
+    }
+
+    @EventHandler(priority = EventPriority.NORMAL)
+    fun onProjectileHit(e: ProjectileHitEvent) {
+        if (!started) {
+            return
+        }
+
+        if (e.entity is Arrow) {
+            object : BukkitRunnable() {
+                override fun run() {
+                    val estimatedHitBlock = VersionIndependentUtils.get().getBlockFromProjectileHitEvent(e)
+                    if (estimatedHitBlock != null) {
+                        if (VersionIndependentUtils.get().isArrowInBlock(e.entity as Arrow)) {
+                            if (buildMaterials.contains(estimatedHitBlock.type)) {
+                                breakBlockWithEffect(estimatedHitBlock)
+                                e.entity.remove()
+                            }
+                        }
+                    }
+                }
+            }.runTaskLater(plugin, 1L)
+        }
+    }
+
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+    fun onInventoryInteract(e: InventoryInteractEvent) {
+        if (!started) {
+            return
+        }
+
+        if (e.whoClicked.gameMode == GameMode.CREATIVE) {
             return
         }
 
