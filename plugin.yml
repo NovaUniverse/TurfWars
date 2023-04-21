@@ -1,0 +1,12 @@
+main: "net.novauniverse.game.turfwars.TurfWarsPlugin"
+name: "TurfWars"
+api-version: 1.13
+version: 1.0.0
+description: "TURF WARS"
+authors: [Zeeraa]
+
+website: "https://novauniverse.net"
+
+depend: [NovaCore, NovaCoreGameEngine]
+
+softdepend: [NovaGamesTarget]

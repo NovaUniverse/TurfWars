@@ -1,0 +1,10 @@
+{
+  "language_code": "en-us",
+  "language_name": "English",
+  "content": {
+    "turfwars.death.killed": "§c§lPlayer Death> %s§l%s §c§lwas killed by %s§l%s",
+    "turfwars.death.death": "§c§lPlayer Death> %s§l%s §c§l died",
+    "turfwars.end.win": "§a§lGame Over> %s§l%s §a§lwon the game",
+    "turfwars.end.ended": "§a§lGame Over> Game Ended"
+  }
+}
