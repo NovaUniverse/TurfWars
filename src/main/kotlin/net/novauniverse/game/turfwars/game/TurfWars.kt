@@ -4,6 +4,7 @@ import net.md_5.bungee.api.ChatColor
 import net.novauniverse.game.turfwars.TurfWarsPlugin
 import net.novauniverse.game.turfwars.game.data.PlayerData
 import net.novauniverse.game.turfwars.game.event.TurfWarsBeginEvent
+import net.novauniverse.game.turfwars.game.event.TurfWarsDeathEvent
 import net.novauniverse.game.turfwars.game.event.TurfWarsTurfChangeEvent
 import net.novauniverse.game.turfwars.game.mapmodules.config.TurfWarsConfig
 import net.novauniverse.game.turfwars.game.team.TurfWarsTeam
@@ -37,16 +38,17 @@ import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.block.BlockPlaceEvent
-import org.bukkit.event.entity.*
+import org.bukkit.event.entity.EntityDamageByEntityEvent
+import org.bukkit.event.entity.EntityShootBowEvent
+import org.bukkit.event.entity.PlayerDeathEvent
+import org.bukkit.event.entity.ProjectileHitEvent
 import org.bukkit.event.inventory.InventoryClickEvent
-import org.bukkit.event.inventory.InventoryInteractEvent
 import org.bukkit.event.player.PlayerDropItemEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerPickupItemEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.scheduler.BukkitRunnable
 import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.math.abs
 import kotlin.math.floor
 
@@ -97,7 +99,6 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
     }
 
     var config: TurfWarsConfig? = null
-        get
         private set
 
     fun getTeam(team: TurfWarsTeam): TurfWarsTeamData {
@@ -178,11 +179,11 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
             }
             return false
         }
-        return true;
+        return true
     }
 
     fun getTeams(): List<TurfWarsTeamData> {
-        val teams: ArrayList<TurfWarsTeamData> = ArrayList();
+        val teams: ArrayList<TurfWarsTeamData> = ArrayList()
         team1?.let { teams.add(it) }
         team2?.let { teams.add(it) }
         return teams
@@ -263,13 +264,13 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
 
         val capturedLocation = if (team.team == TurfWarsTeam.TEAM_1) team1FrontLine + 1 else team1FrontLine
 
-        val config: TurfWarsConfig = this.config!!;
+        val config: TurfWarsConfig = this.config!!
 
         val diff: Int = team1!!.kills - team2!!.kills
         team1FrontLine = initialMiddleLocation + diff
         val floor = config.floorMaterial
 
-        val floorY = config.playArea.position1.blockY;
+        val floorY = config.playArea.position1.blockY
         for (z in config.playArea.position1.blockZ..config.playArea.position2.blockZ) {
             val location = Location(world, capturedLocation.toDouble(), floorY.toDouble(), z.toDouble())
             if (floorMaterials.contains(location.block.type)) {
@@ -482,15 +483,19 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
             }
         }
 
+        var killerPlayer: Player? = null
 
         if (player.killer != null) {
             if (player.killer is Player) {
                 val killer: Player = e.entity.killer
+                killerPlayer = killer
                 LanguageManager.broadcast("turfwars.death.killed", playerColor, player.name, enemyColor, killer.name)
                 getPlayerData(killer)?.incrementKills()
                 return
             }
         }
+
+        Bukkit.getServer().pluginManager.callEvent(TurfWarsDeathEvent(player, killerPlayer))
 
         LanguageManager.broadcast("turfwars.death.death", playerColor, player.name)
     }
@@ -579,8 +584,8 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
             return
         }
 
-        if (e.getItem().getItemStack().getType() == Material.ARROW) {
-            e.setCancelled(true)
+        if (e.item.itemStack.type == Material.ARROW) {
+            e.isCancelled = true
         }
     }
 

@@ -5,10 +5,9 @@ import net.novauniverse.game.turfwars.TurfWarsPlugin
 import net.zeeraa.novacore.spigot.abstraction.VersionIndependentUtils
 import net.zeeraa.novacore.spigot.utils.PlayerUtils
 import org.bukkit.Bukkit
-import java.util.UUID
+import java.util.*
 
-class PlayerData(uuid: UUID) {
-    val uuid: UUID = uuid
+class PlayerData(val uuid: UUID) {
     var respawnTicks = -1
     var kills = 0
 

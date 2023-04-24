@@ -4,14 +4,7 @@ import net.novauniverse.game.turfwars.game.team.TurfWarsTeamData
 import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
 
-class TurfWarsBeginEvent(teamTurfSize: Int, team1: TurfWarsTeamData, team2: TurfWarsTeamData) : Event() {
-    val teamTurfSize : Int = teamTurfSize
-        get
-    val team1 : TurfWarsTeamData = team1
-        get
-    val team2: TurfWarsTeamData = team2
-        get
-
+class TurfWarsBeginEvent(val teamTurfSize: Int, val team1: TurfWarsTeamData, val team2: TurfWarsTeamData) : Event() {
     override fun getHandlers(): HandlerList {
         return HANDLERS
     }

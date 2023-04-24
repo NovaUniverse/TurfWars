@@ -4,12 +4,7 @@ import org.bukkit.entity.Player
 import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
 
-class TurfWarsKillEvent(player: Player, killer: Player) : Event() {
-    val player = player
-        get
-    val killer = killer
-        get
-
+class TurfWarsDeathEvent(val player: Player, val killer: Player?) : Event() {
     override fun getHandlers(): HandlerList {
         return HANDLERS
     }

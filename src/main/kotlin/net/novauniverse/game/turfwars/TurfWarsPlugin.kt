@@ -21,12 +21,9 @@ import java.io.File
 
 class TurfWarsPlugin : JavaPlugin() {
     var game: TurfWars? = null
-        get() = field
         private set
 
     var turfWarsTeamPopulator: TurfWarsTeamPopulator? = DefaultTeamPopulator()
-        get
-        set
 
     companion object {
         private var gameInstance: TurfWarsPlugin? = null

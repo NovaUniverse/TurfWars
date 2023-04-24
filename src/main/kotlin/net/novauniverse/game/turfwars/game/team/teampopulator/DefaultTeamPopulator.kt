@@ -6,18 +6,18 @@ import org.bukkit.entity.Player
 
 class DefaultTeamPopulator : TurfWarsTeamPopulator {
     override fun populateTeams(): Pair<List<Player>> {
-        var team1: List<Player> = ArrayList<Player>()
-        var team2: List<Player> = ArrayList<Player>()
+        val team1: ArrayList<Player> = ArrayList()
+        val team2: ArrayList<Player> = ArrayList()
 
-        var all = ArrayList<Player>(Bukkit.getOnlinePlayers())
+        val all = ArrayList<Player>(Bukkit.getOnlinePlayers())
 
         all.shuffle()
 
         if (all.size > 0) {
             for (i in 0 until all.size / 2) {
-                team1 += all.removeFirst()
+                team1.add(all.removeFirst())
             }
-            team2 += all.removeFirst()
+            team2.add(all.removeFirst())
         }
 
         return Pair<List<Player>>(team1, team2)
