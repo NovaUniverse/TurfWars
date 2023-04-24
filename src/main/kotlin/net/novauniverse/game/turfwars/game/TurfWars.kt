@@ -3,6 +3,8 @@ package net.novauniverse.game.turfwars.game
 import net.md_5.bungee.api.ChatColor
 import net.novauniverse.game.turfwars.TurfWarsPlugin
 import net.novauniverse.game.turfwars.game.data.PlayerData
+import net.novauniverse.game.turfwars.game.event.TurfWarsBeginEvent
+import net.novauniverse.game.turfwars.game.event.TurfWarsTurfChangeEvent
 import net.novauniverse.game.turfwars.game.mapmodules.config.TurfWarsConfig
 import net.novauniverse.game.turfwars.game.team.TurfWarsTeam
 import net.novauniverse.game.turfwars.game.team.TurfWarsTeamData
@@ -28,7 +30,6 @@ import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.block.Block
 import org.bukkit.entity.Arrow
-import org.bukkit.entity.EntityType
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -43,7 +44,6 @@ import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerPickupItemEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.scheduler.BukkitRunnable
-import org.bukkit.util.BlockIterator
 import java.util.*
 import kotlin.math.abs
 import kotlin.math.floor
@@ -275,6 +275,10 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
             }
         }
 
+        val team1Turf: Int = turfSize / 2 + diff
+        val team2Turf: Int = turfSize / 2 - diff
+
+        Bukkit.getServer().pluginManager.callEvent(TurfWarsTurfChangeEvent(team1Turf, team2Turf))
 
         if (abs(diff) >= goal) {
             winner = if (diff > 0) TurfWarsTeam.TEAM_1 else TurfWarsTeam.TEAM_2
@@ -382,6 +386,8 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
 
         started = true
         sendBeginEvent()
+
+        Bukkit.getServer().pluginManager.callEvent(TurfWarsBeginEvent(goal, team1!!.teamConfig, team2!!.teamConfig))
     }
 
     // To support both 1.8 and 1.16+ we need this
@@ -636,19 +642,6 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
 
         if (e.damager is Arrow) {
             e.damage = 1000.0
-        }
-    }
-
-    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
-    fun onEntityDamage(e: EntityDamageEvent) {
-        if (!started) {
-            return
-        }
-
-        if (e.entity.type == EntityType.PLAYER) {
-            if (buildPeriodActive) {
-                e.isCancelled = true
-            }
         }
     }
 }
