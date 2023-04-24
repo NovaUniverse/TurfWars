@@ -38,6 +38,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.block.BlockPlaceEvent
 import org.bukkit.event.entity.*
+import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryInteractEvent
 import org.bukkit.event.player.PlayerDropItemEvent
 import org.bukkit.event.player.PlayerJoinEvent
@@ -617,7 +618,7 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
-    fun onInventoryInteract(e: InventoryInteractEvent) {
+    fun onInventoryInteract(e: InventoryClickEvent) {
         if (!started) {
             return
         }
