@@ -1,7 +1,5 @@
 package net.novauniverse.game.turfwars.game.event
 
-import net.novauniverse.game.turfwars.game.mapmodules.config.TeamConfig
-import net.novauniverse.game.turfwars.game.team.TurfWarsTeamData
 import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
 

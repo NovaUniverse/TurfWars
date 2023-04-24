@@ -387,7 +387,7 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
         started = true
         sendBeginEvent()
 
-        Bukkit.getServer().pluginManager.callEvent(TurfWarsBeginEvent(goal, team1!!.teamConfig, team2!!.teamConfig))
+        Bukkit.getServer().pluginManager.callEvent(TurfWarsBeginEvent(goal, team1!!, team2!!))
     }
 
     // To support both 1.8 and 1.16+ we need this

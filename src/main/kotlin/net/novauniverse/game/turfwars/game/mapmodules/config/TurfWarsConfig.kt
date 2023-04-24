@@ -3,7 +3,6 @@ package net.novauniverse.game.turfwars.game.mapmodules.config
 import net.md_5.bungee.api.ChatColor
 import net.zeeraa.novacore.spigot.abstraction.enums.ColoredBlockType
 import net.zeeraa.novacore.spigot.gameengine.module.modules.game.map.mapmodule.MapModule
-import net.zeeraa.novacore.spigot.utils.ChatColorRGBMapper
 import net.zeeraa.novacore.spigot.utils.LocationData
 import net.zeeraa.novacore.spigot.utils.VectorArea
 import org.bukkit.DyeColor
