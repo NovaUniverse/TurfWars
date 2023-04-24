@@ -29,12 +29,16 @@ class TurfWarsPlugin : JavaPlugin() {
         set
 
     companion object {
-        var instance: TurfWarsPlugin? = null
-            private set
+        private var gameInstance: TurfWarsPlugin? = null
+
+        @JvmStatic
+        fun getInstance(): TurfWarsPlugin {
+            return gameInstance!!
+        }
     }
 
     override fun onEnable() {
-        instance = this
+        gameInstance = this
 
         saveDefaultConfig()
 

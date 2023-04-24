@@ -189,10 +189,10 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
             player.inventory.setItem(0, ItemBuilder(Material.BOW).setName("${turfWarsTeamData.teamConfig.chatColor}Bow").setUnbreakable(true).build())
             player.inventory.setItem(1, ItemBuilder(Material.STONE_SWORD).setName("${turfWarsTeamData.teamConfig.chatColor}Dagger").setUnbreakable(true).build())
 
-            player.inventory.helmet = ItemBuilder(Material.LEATHER_HELMET).setLeatherArmorColor(turfWarsTeamData.teamConfig.chatColor).setUnbreakable(true).build()
-            player.inventory.chestplate = ItemBuilder(Material.LEATHER_CHESTPLATE).setLeatherArmorColor(turfWarsTeamData.teamConfig.chatColor).setUnbreakable(true).build()
-            player.inventory.leggings = ItemBuilder(Material.LEATHER_LEGGINGS).setLeatherArmorColor(turfWarsTeamData.teamConfig.chatColor).setUnbreakable(true).build()
-            player.inventory.boots = ItemBuilder(Material.LEATHER_BOOTS).setLeatherArmorColor(turfWarsTeamData.teamConfig.chatColor).setUnbreakable(true).build()
+            player.inventory.helmet = ItemBuilder(Material.LEATHER_HELMET).setLeatherArmorColor(turfWarsTeamData.teamConfig.color).setUnbreakable(true).build()
+            player.inventory.chestplate = ItemBuilder(Material.LEATHER_CHESTPLATE).setLeatherArmorColor(turfWarsTeamData.teamConfig.color).setUnbreakable(true).build()
+            player.inventory.leggings = ItemBuilder(Material.LEATHER_LEGGINGS).setLeatherArmorColor(turfWarsTeamData.teamConfig.color).setUnbreakable(true).build()
+            player.inventory.boots = ItemBuilder(Material.LEATHER_BOOTS).setLeatherArmorColor(turfWarsTeamData.teamConfig.color).setUnbreakable(true).build()
 
             player.gameMode = GameMode.SURVIVAL
             player.teleport(turfWarsTeamData.teamConfig.spawnLocation.toLocation(world))

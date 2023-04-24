@@ -1,10 +1,12 @@
 package net.novauniverse.game.turfwars.game.mapmodules.config
 
 import net.md_5.bungee.api.ChatColor
+import net.zeeraa.novacore.spigot.abstraction.VersionIndependentUtils
 import net.zeeraa.novacore.spigot.abstraction.enums.ColoredBlockType
 import net.zeeraa.novacore.spigot.gameengine.module.modules.game.map.mapmodule.MapModule
 import net.zeeraa.novacore.spigot.utils.LocationData
 import net.zeeraa.novacore.spigot.utils.VectorArea
+import org.bukkit.Color
 import org.bukkit.DyeColor
 import org.json.JSONObject
 
@@ -54,12 +56,27 @@ class TurfWarsConfig(json: JSONObject) : MapModule(json) {
         val team1DisplayName = json.optString("display_name", "Red Team")
         val team2DisplayName = json.optString("display_name", "Blue Team")
 
+
+        val team1RGB = if (team1JSON.has("rgb_color")) {
+            val rgb = team1JSON.getJSONObject("rgb_color")
+            Color.fromRGB(rgb.optInt("r", 0), rgb.optInt("g", 0), rgb.optInt("b", 0))
+        } else {
+            VersionIndependentUtils.get().bungeecordChatColorToBukkitColor(team1ChatColor)
+        }
+
+        val team2RGB = if (team2JSON.has("rgb_color")) {
+            val rgb = team2JSON.getJSONObject("rgb_color")
+            Color.fromRGB(rgb.optInt("r", 0), rgb.optInt("g", 0), rgb.optInt("b", 0))
+        } else {
+            VersionIndependentUtils.get().bungeecordChatColorToBukkitColor(team2ChatColor)
+        }
+
         playArea = VectorArea.fromJSON(json.getJSONObject("play_area"))
 
         floorMaterial = ColoredBlockType.valueOf(json.optString("floor_type", ColoredBlockType.CLAY.name))
         buildingBlocks = ColoredBlockType.valueOf(json.optString("building_block_type", ColoredBlockType.WOOL.name))
 
-        team1 = TeamConfig(team1ChatColor, team1Color, team1Spawn, team1DisplayName)
-        team2 = TeamConfig(team2ChatColor, team2Color, team2Spawn, team2DisplayName)
+        team1 = TeamConfig(team1ChatColor, team1Color, team1RGB, team1Spawn, team1DisplayName)
+        team2 = TeamConfig(team2ChatColor, team2Color, team2RGB, team2Spawn, team2DisplayName)
     }
 }
