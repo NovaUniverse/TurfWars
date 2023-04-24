@@ -228,6 +228,8 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
     private fun startBuildTime() {
         buildPeriodActive = true
 
+        world.getEntitiesByClass(Arrow::class.java).stream().filter { arrow: Arrow -> VersionIndependentUtils.get().isArrowInBlock(arrow) }.forEach(Arrow::remove)
+
         VersionIndependentUtils.get().broadcastTitle("${ChatColor.GREEN}Build", "${ChatColor.AQUA}Build period ends in ${config!!.buildTime} seconds", 0, 60, 20)
 
         Gamerule.DO_TILE_DROPS.set(world, true)
@@ -488,14 +490,14 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
         if (player.killer != null) {
             if (player.killer is Player) {
                 val killer: Player = e.entity.killer
-                killerPlayer = killer
+                Bukkit.getServer().pluginManager.callEvent(TurfWarsDeathEvent(player, killer))
                 LanguageManager.broadcast("turfwars.death.killed", playerColor, player.name, enemyColor, killer.name)
                 getPlayerData(killer)?.incrementKills()
                 return
             }
+        } else {
+            Bukkit.getServer().pluginManager.callEvent(TurfWarsDeathEvent(player, null))
         }
-
-        Bukkit.getServer().pluginManager.callEvent(TurfWarsDeathEvent(player, killerPlayer))
 
         LanguageManager.broadcast("turfwars.death.death", playerColor, player.name)
     }
