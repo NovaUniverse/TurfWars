@@ -46,6 +46,7 @@ import org.bukkit.event.player.PlayerPickupItemEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.scheduler.BukkitRunnable
 import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.math.abs
 import kotlin.math.floor
 
@@ -178,6 +179,13 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
             return false
         }
         return true;
+    }
+
+    fun getTeams(): List<TurfWarsTeamData> {
+        val teams: ArrayList<TurfWarsTeamData> = ArrayList();
+        team1?.let { teams.add(it) }
+        team2?.let { teams.add(it) }
+        return teams
     }
 
     fun tpPlayer(player: Player) {
