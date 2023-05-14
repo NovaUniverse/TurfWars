@@ -8,7 +8,6 @@ import net.zeeraa.novacore.spigot.utils.LocationData
 import net.zeeraa.novacore.spigot.utils.VectorArea
 import org.bukkit.Color
 import org.bukkit.DyeColor
-import org.bukkit.Location
 import org.json.JSONObject
 
 class TurfWarsConfig(json: JSONObject) : MapModule(json) {
