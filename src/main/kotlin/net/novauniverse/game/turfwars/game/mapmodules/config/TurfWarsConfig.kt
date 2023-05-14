@@ -8,6 +8,7 @@ import net.zeeraa.novacore.spigot.utils.LocationData
 import net.zeeraa.novacore.spigot.utils.VectorArea
 import org.bukkit.Color
 import org.bukkit.DyeColor
+import org.bukkit.Location
 import org.json.JSONObject
 
 class TurfWarsConfig(json: JSONObject) : MapModule(json) {
@@ -38,8 +39,19 @@ class TurfWarsConfig(json: JSONObject) : MapModule(json) {
         val team1JSON = json.getJSONObject("team_1")
         val team2JSON = json.getJSONObject("team_2")
 
-        val team1Spawn = LocationData.fromJSON(team1JSON.getJSONObject("spawn_location"))
-        val team2Spawn = LocationData.fromJSON(team2JSON.getJSONObject("spawn_location"))
+        val team1Spawns = ArrayList<LocationData>() //LocationData.fromJSON(team1JSON.getJSONObject("spawn_location"))
+        val team2Spawns = ArrayList<LocationData>()//LocationData.fromJSON(team2JSON.getJSONObject("spawn_location"))
+
+        val team1SpawnData = team1JSON.getJSONArray("spawn_location")
+        val team2SpawnData = team2JSON.getJSONArray("spawn_location")
+
+        for (i in 0..team1SpawnData.length()) {
+            team1Spawns.add(LocationData.fromJSON(team1SpawnData.getJSONObject(i)))
+        }
+
+        for (i in 0..team2SpawnData.length()) {
+            team2Spawns.add(LocationData.fromJSON(team2SpawnData.getJSONObject(i)))
+        }
 
         val team1Color = DyeColor.valueOf(team1JSON.optString("color", DyeColor.RED.name))
         val team2Color = DyeColor.valueOf(team2JSON.optString("color", DyeColor.BLUE.name))
@@ -76,7 +88,7 @@ class TurfWarsConfig(json: JSONObject) : MapModule(json) {
         floorMaterial = ColoredBlockType.valueOf(json.optString("floor_type", ColoredBlockType.CLAY.name))
         buildingBlocks = ColoredBlockType.valueOf(json.optString("building_block_type", ColoredBlockType.WOOL.name))
 
-        team1 = TeamConfig(team1ChatColor, team1Color, team1RGB, team1Spawn, team1DisplayName)
-        team2 = TeamConfig(team2ChatColor, team2Color, team2RGB, team2Spawn, team2DisplayName)
+        team1 = TeamConfig(team1ChatColor, team1Color, team1RGB, team1Spawns, team1DisplayName)
+        team2 = TeamConfig(team2ChatColor, team2Color, team2RGB, team2Spawns, team2DisplayName)
     }
 }

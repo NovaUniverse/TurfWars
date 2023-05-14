@@ -205,7 +205,10 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
             player.inventory.boots = ItemBuilder(Material.LEATHER_BOOTS).setLeatherArmorColor(turfWarsTeamData.teamConfig.color).setUnbreakable(true).build()
 
             player.gameMode = GameMode.SURVIVAL
-            player.teleport(turfWarsTeamData.teamConfig.spawnLocation.toLocation(world))
+
+            val location = turfWarsTeamData.teamConfig.spawnLocations.get(random.nextInt(turfWarsTeamData.teamConfig.spawnLocations.size))
+
+            player.teleport(location.toLocation(world))
 
             addArrow(player)
         } else {

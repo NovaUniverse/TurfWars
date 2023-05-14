@@ -4,6 +4,7 @@ import net.novauniverse.game.turfwars.game.TurfWars
 import net.novauniverse.game.turfwars.game.mapmodules.config.TurfWarsConfig
 import net.novauniverse.game.turfwars.game.team.teampopulator.DefaultTeamPopulator
 import net.novauniverse.game.turfwars.game.team.teampopulator.TurfWarsTeamPopulator
+import net.novauniverse.novacore.thridparty.org.bstats.bukkit.Metrics
 import net.zeeraa.novacore.commons.log.Log
 import net.zeeraa.novacore.spigot.gameengine.NovaCoreGameEngine
 import net.zeeraa.novacore.spigot.gameengine.module.modules.game.GameManager
@@ -39,6 +40,8 @@ class TurfWarsPlugin : JavaPlugin() {
 
         saveDefaultConfig()
 
+        Metrics(this, 18425)
+
         Log.info("TurfWars", "Loading language files...")
         try {
             LanguageReader.readFromJar(this.javaClass, "/lang/en-us.json")
@@ -70,7 +73,7 @@ class TurfWarsPlugin : JavaPlugin() {
         Bukkit.getServer().pluginManager.registerEvents(mapSelector, this)
 
         game = TurfWars(this)
-        var gameManager = ModuleManager.getModule(GameManager::class.java)
+        val gameManager = ModuleManager.getModule(GameManager::class.java)
         gameManager.loadGame(game)
         gameManager.isUseCombatTagging = false
         gameManager.mapSelector = mapSelector
