@@ -1,6 +1,7 @@
 package net.novauniverse.game.turfwars.game.mapmodules.config
 
 import net.md_5.bungee.api.ChatColor
+import net.zeeraa.novacore.commons.log.Log
 import net.zeeraa.novacore.spigot.abstraction.VersionIndependentUtils
 import net.zeeraa.novacore.spigot.abstraction.enums.ColoredBlockType
 import net.zeeraa.novacore.spigot.gameengine.module.modules.game.map.mapmodule.MapModule
@@ -19,6 +20,8 @@ class TurfWarsConfig(json: JSONObject) : MapModule(json) {
 
     val playArea: VectorArea
 
+    val nightvison: Boolean
+
     var respawnTime = 5
         private set
 
@@ -35,6 +38,8 @@ class TurfWarsConfig(json: JSONObject) : MapModule(json) {
         private set
 
     init {
+        nightvison = json.optBoolean("nightvison")
+
         val team1JSON = json.getJSONObject("team_1")
         val team2JSON = json.getJSONObject("team_2")
 
@@ -44,11 +49,11 @@ class TurfWarsConfig(json: JSONObject) : MapModule(json) {
         val team1SpawnData = team1JSON.getJSONArray("spawn_location")
         val team2SpawnData = team2JSON.getJSONArray("spawn_location")
 
-        for (i in 0..team1SpawnData.length()) {
+        for (i in 0 until  team1SpawnData.length()) {
             team1Spawns.add(LocationData.fromJSON(team1SpawnData.getJSONObject(i)))
         }
 
-        for (i in 0..team2SpawnData.length()) {
+        for (i in 0 until team2SpawnData.length()) {
             team2Spawns.add(LocationData.fromJSON(team2SpawnData.getJSONObject(i)))
         }
 

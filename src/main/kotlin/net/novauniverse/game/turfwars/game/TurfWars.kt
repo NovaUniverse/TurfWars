@@ -47,6 +47,8 @@ import org.bukkit.event.player.PlayerDropItemEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerPickupItemEvent
 import org.bukkit.inventory.ItemStack
+import org.bukkit.potion.PotionEffect
+import org.bukkit.potion.PotionEffectType
 import org.bukkit.scheduler.BukkitRunnable
 import java.util.*
 import kotlin.math.abs
@@ -56,11 +58,12 @@ import kotlin.math.floor
 class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
     private var started = false
     private var ended = false
-    private val turfWarsPlugin: TurfWarsPlugin
+    private val turfWarsPlugin: TurfWarsPlugin = plugin
 
     private var playerDataList: List<PlayerData> = ArrayList()
 
     private var tickTask: SimpleTask? = null
+    private var nightvisionTask: SimpleTask? = null
 
     private var floorMaterials: ArrayList<Material> = ArrayList()
     private var buildMaterials: ArrayList<Material> = ArrayList()
@@ -93,10 +96,6 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
 
     var giveArrowTrigger: RepeatingGameTrigger? = null
         private set
-
-    init {
-        turfWarsPlugin = plugin
-    }
 
     var config: TurfWarsConfig? = null
         private set
@@ -357,6 +356,16 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
             }
         }, 1L, 1L)
 
+
+        nightvisionTask = SimpleTask(plugin, {
+            Bukkit.getOnlinePlayers().forEach {
+                it.addPotionEffect(PotionEffect(PotionEffectType.NIGHT_VISION, 200, 0, false, false))
+            } }, 5L, 5L)
+
+        if(config!!.nightvison) {
+            Task.tryStartTask(nightvisionTask)
+        }
+
         team1 = TurfWarsTeamData(TurfWarsTeam.TEAM_1, config!!.team1)
         team2 = TurfWarsTeamData(TurfWarsTeam.TEAM_2, config!!.team2)
 
@@ -454,6 +463,7 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
             LanguageManager.broadcast("turfwars.end.ended")
         }
 
+        Task.tryStopTask(nightvisionTask)
         Task.tryStopTask(tickTask)
 
         ended = true
