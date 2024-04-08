@@ -20,7 +20,7 @@ class TurfWarsConfig(json: JSONObject) : MapModule(json) {
 
     val playArea: VectorArea
 
-    val nightvison: Boolean
+    val nightvision: Boolean = json.optBoolean("nightvision")
 
     var respawnTime = 5
         private set
@@ -38,7 +38,6 @@ class TurfWarsConfig(json: JSONObject) : MapModule(json) {
         private set
 
     init {
-        nightvison = json.optBoolean("nightvison")
 
         val team1JSON = json.getJSONObject("team_1")
         val team2JSON = json.getJSONObject("team_2")

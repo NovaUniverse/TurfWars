@@ -362,7 +362,7 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
                 it.addPotionEffect(PotionEffect(PotionEffectType.NIGHT_VISION, 200, 0, false, false))
             } }, 5L, 5L)
 
-        if(config!!.nightvison) {
+        if(config!!.nightvision) {
             Task.tryStartTask(nightvisionTask)
         }
 
