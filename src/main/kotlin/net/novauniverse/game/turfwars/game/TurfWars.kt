@@ -359,7 +359,7 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
 
         nightvisionTask = SimpleTask(plugin, {
             Bukkit.getOnlinePlayers().forEach {
-                it.addPotionEffect(PotionEffect(PotionEffectType.NIGHT_VISION, 200, 0, false, false))
+                it.addPotionEffect(PotionEffect(PotionEffectType.NIGHT_VISION, 100000, 0, false, false))
             } }, 5L, 5L)
 
         if(config!!.nightvision) {
