@@ -3,6 +3,7 @@ package net.novauniverse.game.turfwars.game.mapmodules.config
 import net.md_5.bungee.api.ChatColor
 import net.zeeraa.novacore.commons.log.Log
 import net.zeeraa.novacore.spigot.abstraction.VersionIndependentUtils
+import net.zeeraa.novacore.spigot.abstraction.bossbar.NovaBossBar.NovaBarColor
 import net.zeeraa.novacore.spigot.abstraction.enums.ColoredBlockType
 import net.zeeraa.novacore.spigot.gameengine.module.modules.game.map.mapmodule.MapModule
 import net.zeeraa.novacore.spigot.utils.LocationData
@@ -19,6 +20,9 @@ class TurfWarsConfig(json: JSONObject) : MapModule(json) {
     val buildingBlocks: ColoredBlockType
 
     val playArea: VectorArea
+
+    val team1SpawnArea: VectorArea
+    val team2SpawnArea: VectorArea
 
     val nightvision: Boolean = json.optBoolean("nightvision")
 
@@ -38,7 +42,6 @@ class TurfWarsConfig(json: JSONObject) : MapModule(json) {
         private set
 
     init {
-
         val team1JSON = json.getJSONObject("team_1")
         val team2JSON = json.getJSONObject("team_2")
 
@@ -48,7 +51,10 @@ class TurfWarsConfig(json: JSONObject) : MapModule(json) {
         val team1SpawnData = team1JSON.getJSONArray("spawn_location")
         val team2SpawnData = team2JSON.getJSONArray("spawn_location")
 
-        for (i in 0 until  team1SpawnData.length()) {
+        team1SpawnArea = VectorArea.fromJSON(team1JSON.getJSONObject("spawn_area"))
+        team2SpawnArea = VectorArea.fromJSON(team2JSON.getJSONObject("spawn_area"))
+
+        for (i in 0 until team1SpawnData.length()) {
             team1Spawns.add(LocationData.fromJSON(team1SpawnData.getJSONObject(i)))
         }
 
@@ -71,7 +77,6 @@ class TurfWarsConfig(json: JSONObject) : MapModule(json) {
         val team1DisplayName = json.optString("display_name", "Red Team")
         val team2DisplayName = json.optString("display_name", "Blue Team")
 
-
         val team1RGB = if (team1JSON.has("rgb_color")) {
             val rgb = team1JSON.getJSONObject("rgb_color")
             Color.fromRGB(rgb.optInt("r", 0), rgb.optInt("g", 0), rgb.optInt("b", 0))
@@ -91,7 +96,10 @@ class TurfWarsConfig(json: JSONObject) : MapModule(json) {
         floorMaterial = ColoredBlockType.valueOf(json.optString("floor_type", ColoredBlockType.CLAY.name))
         buildingBlocks = ColoredBlockType.valueOf(json.optString("building_block_type", ColoredBlockType.WOOL.name))
 
-        team1 = TeamConfig(team1ChatColor, team1Color, team1RGB, team1Spawns, team1DisplayName)
-        team2 = TeamConfig(team2ChatColor, team2Color, team2RGB, team2Spawns, team2DisplayName)
+        val team1BarColor = NovaBarColor.valueOf(team1JSON.optString("bar_color", "GREEN"))
+        val team2BarColor = NovaBarColor.valueOf(team2JSON.optString("bar_color", "GREEN"))
+
+        team1 = TeamConfig(team1ChatColor, team1Color, team1RGB, team1Spawns, team1SpawnArea, team1DisplayName, team1BarColor)
+        team2 = TeamConfig(team2ChatColor, team2Color, team2RGB, team2Spawns, team2SpawnArea, team2DisplayName, team2BarColor)
     }
 }

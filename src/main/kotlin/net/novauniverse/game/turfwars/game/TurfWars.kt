@@ -12,6 +12,8 @@ import net.novauniverse.game.turfwars.game.team.TurfWarsTeamData
 import net.zeeraa.novacore.commons.log.Log
 import net.zeeraa.novacore.commons.tasks.Task
 import net.zeeraa.novacore.spigot.abstraction.VersionIndependentUtils
+import net.zeeraa.novacore.spigot.abstraction.bossbar.NovaBossBar
+import net.zeeraa.novacore.spigot.abstraction.enums.VersionIndependentSound
 import net.zeeraa.novacore.spigot.gameengine.module.modules.game.GameEndReason
 import net.zeeraa.novacore.spigot.gameengine.module.modules.game.MapGame
 import net.zeeraa.novacore.spigot.gameengine.module.modules.game.elimination.PlayerQuitEliminationAction
@@ -25,14 +27,13 @@ import net.zeeraa.novacore.spigot.tasks.SimpleTask
 import net.zeeraa.novacore.spigot.utils.InventoryUtils
 import net.zeeraa.novacore.spigot.utils.ItemBuilder
 import net.zeeraa.novacore.spigot.utils.PlayerUtils
+import net.zeeraa.novacore.spigot.utils.RandomFireworkEffect
 import org.bukkit.Bukkit
 import org.bukkit.GameMode
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.block.Block
-import org.bukkit.entity.Arrow
-import org.bukkit.entity.LivingEntity
-import org.bukkit.entity.Player
+import org.bukkit.entity.*
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
@@ -51,9 +52,9 @@ import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import org.bukkit.scheduler.BukkitRunnable
 import java.util.*
+import java.util.function.Consumer
 import kotlin.math.abs
 import kotlin.math.floor
-
 
 class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
     private var started = false
@@ -64,9 +65,15 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
 
     private var tickTask: SimpleTask? = null
     private var nightvisionTask: SimpleTask? = null
+    private var spawnBuffTask: SimpleTask? = null
 
     private var floorMaterials: ArrayList<Material> = ArrayList()
     private var buildMaterials: ArrayList<Material> = ArrayList()
+
+    private var weakProjectiles: ArrayList<Entity> = ArrayList()
+
+    private lateinit var team1BossBar: NovaBossBar
+    private lateinit var team2BossBar: NovaBossBar
 
     var winner: TurfWarsTeam? = null
         private set
@@ -254,9 +261,29 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
         Gamerule.DO_TILE_DROPS.set(world, false)
 
         Bukkit.getOnlinePlayers().filter(this::isPlayerInGame).forEach {
+            PlayerUtils.fullyHealPlayer(it)
             it.inventory.setItem(2, ItemStack(Material.AIR))
         }
         buildTimeStartTrigger?.start()
+    }
+
+    override fun onLoad() {
+        team1BossBar = VersionIndependentUtils.get().createBossBar("PLACEHOLDER")
+        team2BossBar = VersionIndependentUtils.get().createBossBar("PLACEHOLDER")
+    }
+
+    fun updateBossBars() {
+        val diff: Int = team1!!.kills - team2!!.kills
+        val team1Turf: Int = turfSize / 2 + diff
+        val team2Turf: Int = turfSize / 2 - diff
+
+        try {
+            team1BossBar.progress = team1Turf.toFloat() / turfSize.toFloat()
+            team2BossBar.progress = team2Turf.toFloat() / turfSize.toFloat()
+        } catch (e: Exception) {
+            Log.error("TurfWars", "Exception occurred while updating boss bars. ${e.javaClass.name} ${e.message}")
+            e.printStackTrace()
+        }
     }
 
     private fun addTeamKill(team: TurfWarsTeamData) {
@@ -293,6 +320,8 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
         val team2Turf: Int = turfSize / 2 - diff
 
         Bukkit.getServer().pluginManager.callEvent(TurfWarsTurfChangeEvent(team1Turf, team2Turf))
+
+        updateBossBars()
 
         if (abs(diff) >= goal) {
             winner = if (diff > 0) TurfWarsTeam.TEAM_1 else TurfWarsTeam.TEAM_2
@@ -360,11 +389,22 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
         nightvisionTask = SimpleTask(plugin, {
             Bukkit.getOnlinePlayers().forEach {
                 it.addPotionEffect(PotionEffect(PotionEffectType.NIGHT_VISION, 100000, 0, false, false))
-            } }, 5L, 5L)
+            }
+        }, 5L, 5L)
 
-        if(config!!.nightvision) {
-            Task.tryStartTask(nightvisionTask)
-        }
+        spawnBuffTask = SimpleTask(plugin, {
+            weakProjectiles.removeIf(Entity::isDead)
+            Bukkit.getOnlinePlayers().filter(this::isPlayerInGame).forEach {
+                if (it.gameMode != GameMode.SPECTATOR) {
+                    val team = getTeam(it)
+                    if (team != null) {
+                        if (team.teamConfig.spawnArea.isInside(it)) {
+                            it.addPotionEffect(PotionEffect(PotionEffectType.REGENERATION, 0, 20, false, false))
+                        }
+                    }
+                }
+            }
+        }, 5L, 5L)
 
         team1 = TurfWarsTeamData(TurfWarsTeam.TEAM_1, config!!.team1)
         team2 = TurfWarsTeamData(TurfWarsTeam.TEAM_2, config!!.team2)
@@ -373,11 +413,13 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
 
         teamPairs.object1.forEach {
             addPlayer(it)
+            team1BossBar.addPlayer(it)
             team1!!.members += it.uniqueId
         }
 
         teamPairs.object2.forEach {
             addPlayer(it)
+            team2BossBar.addPlayer(it)
             team2!!.members += it.uniqueId
         }
 
@@ -403,13 +445,26 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
         Gamerule.DO_TILE_DROPS.set(world, false)
 
         Task.tryStartTask(tickTask)
+        Task.tryStartTask(spawnBuffTask)
+        if (config!!.nightvision) {
+            Task.tryStartTask(nightvisionTask)
+        }
 
         sampleColoredMaterials()
 
         startBuildTime()
 
+        team1BossBar.text = team1!!.teamConfig.chatColor.toString() + ChatColor.BOLD.toString() + team1!!.teamConfig.displayName
+        team1BossBar.color = team1!!.teamConfig.bossBarColor
+        team1BossBar.progress = 0F
+
+        team2BossBar.text = team2!!.teamConfig.chatColor.toString() + ChatColor.BOLD.toString() + team2!!.teamConfig.displayName
+        team2BossBar.color = team2!!.teamConfig.bossBarColor
+        team2BossBar.progress = 0F
+
         started = true
         sendBeginEvent()
+        updateBossBars()
 
         Bukkit.getServer().pluginManager.callEvent(TurfWarsBeginEvent(goal, team1!!, team2!!))
     }
@@ -463,8 +518,30 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
             LanguageManager.broadcast("turfwars.end.ended")
         }
 
+        Bukkit.getOnlinePlayers().forEach {
+            it.gameMode = GameMode.SPECTATOR
+            VersionIndependentUtils.get().playSound(it, it.location, VersionIndependentSound.WITHER_DEATH, 1F, 1F)
+        }
+
+        val spawnLocations = ArrayList<Location>()
+
+        getTeam(TurfWarsTeam.TEAM_1).teamConfig.spawnLocations.stream().map { it.toLocation(world) }.forEach(spawnLocations::add)
+        getTeam(TurfWarsTeam.TEAM_2).teamConfig.spawnLocations.stream().map { it.toLocation(world) }.forEach(spawnLocations::add)
+
+        spawnLocations.forEach(Consumer { location: Location ->
+            val fw = location.world.spawnEntity(location, EntityType.FIREWORK) as Firework
+            val fwm = fw.fireworkMeta
+            fwm.power = 2
+            fwm.addEffect(RandomFireworkEffect.randomFireworkEffect())
+            if (random.nextBoolean()) {
+                fwm.addEffect(RandomFireworkEffect.randomFireworkEffect())
+            }
+            fw.fireworkMeta = fwm
+        })
+
         Task.tryStopTask(nightvisionTask)
         Task.tryStopTask(tickTask)
+        Task.tryStopTask(spawnBuffTask)
 
         ended = true
     }
@@ -498,8 +575,6 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
             }
         }
 
-        var killerPlayer: Player? = null
-
         if (player.killer != null) {
             if (player.killer is Player) {
                 val killer: Player = e.entity.killer
@@ -529,6 +604,14 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
             val playerData = getPlayerData(player)
             if (playerData != null) {
                 playerData.respawnTicks = config!!.respawnTime * 20
+            }
+
+            val team = getTeam(player)
+            if (team != null) {
+                when (team.team) {
+                    TurfWarsTeam.TEAM_1 -> team1BossBar.addPlayer(player)
+                    TurfWarsTeam.TEAM_2 -> team2BossBar.addPlayer(player)
+                }
             }
         }
     }
@@ -610,11 +693,32 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
             return
         }
 
-        if (!buildPeriodActive) {
+        if (buildPeriodActive) {
+            e.isCancelled = true
             return
         }
 
-        e.isCancelled = true
+        var isWeak = false
+        if (e.entity is Player) {
+            val shooter: Player = e.entity as Player
+            if (isPlayerInGame(shooter)) {
+                val team = getTeam(shooter)
+                if (team != null) {
+                    val enemyTeam = getTeam(team.team.getOpposite())
+                    if (enemyTeam.teamConfig.spawnArea.isInside(shooter)) {
+                        isWeak = true
+                    }
+                }
+            }
+        }
+
+        if (e.force < 0.75F) {
+            isWeak = true
+        }
+
+        if (isWeak) {
+            weakProjectiles.add(e.projectile)
+        }
     }
 
     fun breakBlockWithEffect(block: Block) {
@@ -666,6 +770,10 @@ class TurfWars(plugin: TurfWarsPlugin) : MapGame(plugin), Listener {
 
         if (buildPeriodActive) {
             e.isCancelled = true
+            return
+        }
+
+        if (weakProjectiles.contains(e.damager)) {
             return
         }
 
