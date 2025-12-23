@@ -1,6 +1,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <artifactId>TurfWars</artifactId>
     <version>1.0.0-SNAPSHOT</version>
@@ -179,8 +179,8 @@
 
     <repositories>
         <repository>
-            <id>novauniverse2</id>
-            <url>https://nexus2.novauniverse.net/repository/novauniverse-group/</url>
+            <id>novauniverse</id>
+            <url>https://nexus.novauniverse.net/repository/novauniverse-group/</url>
         </repository>
     </repositories>
 
@@ -192,7 +192,22 @@
             <artifactId>spigot-api</artifactId>
             <version>1.8.8-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>net.md-5</groupId>
+                    <artifactId>bungeecord-chat</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
+
+        <!-- BungeeCord Chat API -->
+        <dependency>
+            <groupId>net.md-5</groupId>
+            <artifactId>bungeecord-chat</artifactId>
+            <version>1.16-R0.4</version>
+            <scope>provided</scope>
+        </dependency>
+
 
         <!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
         <dependency>
